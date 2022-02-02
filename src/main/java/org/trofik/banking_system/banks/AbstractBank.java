@@ -1,4 +1,4 @@
-package org.trofik.banks;
+package org.trofik.banking_system.banks;
 
 import java.util.*;
 
@@ -9,6 +9,19 @@ class CurrencyExchange {
     CurrencyExchange(Currency from, Currency to) {
         this.from = from;
         this.to = to;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CurrencyExchange that = (CurrencyExchange) o;
+        return from == that.from && to == that.to;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(from, to);
     }
 }
 
@@ -34,6 +47,10 @@ public class AbstractBank {
     }
 
     public void addExchangePair(Currency from, Currency to, float cost) {
+        if (!currencyBank.contains(from) || !currencyBank.contains(to)) {
+            System.err.println("Данную(-ые) валюту(-ы) " + from.toString() + "/" + to.toString() + " не принимает банк " + nameBank);
+            return;
+        }
         CurrencyExchange exchange = new CurrencyExchange(from, to);
         exchangeRate.put(exchange, cost);
     }
