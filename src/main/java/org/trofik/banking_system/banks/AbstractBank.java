@@ -25,7 +25,7 @@ class CurrencyExchange {
     }
 }
 
-public class AbstractBank {
+public abstract class AbstractBank {
     public final String nameBank;
     public final String countryBank;
     public Set<Currency> currencyBank;
@@ -67,8 +67,6 @@ public class AbstractBank {
 
     public boolean delExchangePair(Currency from, Currency to) {
         CurrencyExchange exchange = new CurrencyExchange(from, to);
-        exchange.from = from;
-        exchange.to = to;
         if (exchangeRate.containsKey(exchange)) {
             exchangeRate.remove(exchange);
             return true;
