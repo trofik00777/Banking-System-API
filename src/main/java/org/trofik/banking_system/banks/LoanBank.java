@@ -18,6 +18,10 @@ public class LoanBank extends AbstractBank {
         super(nameBank, countryBank, loanInterestRate);
     }
 
+    public LoanBank(Admin admin) {
+        super(admin);
+    }
+
     public boolean takeLoan(User user, Money sumLoan) {
         //...
         return false;
