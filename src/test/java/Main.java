@@ -1,4 +1,7 @@
+import com.google.gson.JsonObject;
 import org.trofik.banking_system.banks.*;
+
+import java.sql.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -13,5 +16,11 @@ public class Main {
 
 //        LoanBank b = new LoanBank("Name", "Rus");
 //        b.test();
+
+        JsonObject json = new JsonObject();
+        json.addProperty("hello", 12);
+        json.addProperty("test", "val");
+        json.addProperty("fuck", 67.5f);
+        System.out.println(json);
     }
 }

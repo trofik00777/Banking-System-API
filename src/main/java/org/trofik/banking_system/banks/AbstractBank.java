@@ -1,9 +1,13 @@
 package org.trofik.banking_system.banks;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.trofik.banking_system.users.Admin;
+import org.trofik.banking_system.users.Client;
 
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 class CurrencyExchange {
     Currency from;
@@ -12,6 +16,11 @@ class CurrencyExchange {
     CurrencyExchange(Currency from, Currency to) {
         this.from = from;
         this.to = to;
+    }
+
+    @Override
+    public String toString() {
+        return from.toString() + "," + to.toString();
     }
 
     @Override
@@ -33,12 +42,16 @@ public abstract class AbstractBank {
     public final String countryBank;
     public Set<Currency> currencyBank;
     public Map<CurrencyExchange, Float> exchangeRate;
+    public float percent;
+    public int idBank;
 
-    protected AbstractBank(String nameBank, String countryBank) {
+    protected AbstractBank(String nameBank, String countryBank, float percent) {
         this.nameBank = nameBank;
         this.countryBank = countryBank;
+        this.percent = percent;
         currencyBank = new HashSet<>();
         exchangeRate = new HashMap<>();
+        idBank = -1;
     }
 
     protected AbstractBank(Admin admin) {
@@ -47,17 +60,36 @@ public abstract class AbstractBank {
             con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE);
             try {
                 Statement stat = con.createStatement();
-//                ResultSet res = stat.executeQuery(String.format("SELECT id FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
-//                res.next();
-//                int idAdmin = res.getInt("id");
-                ResultSet res = stat.executeQuery(String.format("SELECT * FROM `Banks` WHERE adminId=%d", admin.id));
+                ResultSet res;
+                res = stat.executeQuery(String.format("SELECT id FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
+                if (!res.next()) {
+                    throw new IncorrectPasswordException();
+                }
+                res = stat.executeQuery(String.format("SELECT * FROM `Banks` WHERE adminId=%d", admin.id));
                 if (res.next()) {
                     nameBank = res.getString("name");
                     countryBank = res.getString("country");
+                    percent = res.getFloat("percent");
+                    idBank = res.getInt("id");
+
+                    currencyBank = Arrays.stream(
+                            res.getString("currency").split(",")
+                    ).map(Currency::valueOf).collect(Collectors.toSet());
+
+                    JsonParser parser = new JsonParser();
+                    JsonObject json = (JsonObject) parser.parse(res.getString("exchangeRate"));
+                    exchangeRate = new HashMap<>();
+                    for (String key : json.keySet()) {
+                        String[] fromTo = key.split(",");
+                        exchangeRate.put(new CurrencyExchange(Currency.valueOf(fromTo[0]), Currency.valueOf(fromTo[1])), json.get(key).getAsFloat());
+                    }
                 } else {
                     System.err.println("Bank not found for adminId=" + admin.id);
                     throw new ConnectionException();
                 }
+            } catch (IncorrectPasswordException e) {
+                System.err.println("Incorrect Login or Password");
+                throw new IncorrectPasswordException();
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new ConnectionException();
@@ -109,5 +141,92 @@ public abstract class AbstractBank {
         return false;
     }
 
-    public abstract boolean save(Admin admin);
+    protected static ResultSet getInfoClient(Client client, String tableToSearchName) {
+        try {
+            Connection con;
+            con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE);
+            try {
+                Statement stat = con.createStatement();
+                ResultSet res;
+                res = stat.executeQuery(String.format("SELECT id FROM `Clients` WHERE login='%s' AND password='%s'", client.login, client.password));
+                if (!res.next()) {
+                    throw new IncorrectPasswordException();
+                }
+                res = stat.executeQuery(String.format(
+                        "SELECT * FROM `%s` WHERE clientId=%d",
+                        tableToSearchName,
+                        client.id
+                ));
+                return res;
+            } catch (IncorrectPasswordException e) {
+                System.err.println("Incorrect Login or Password");
+                throw new IncorrectPasswordException();
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ConnectionException();
+            } finally {
+                con.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new ConnectionException();
+        }
+    }
+
+    protected boolean save(Admin admin, int typeBank) {
+        try {
+            Connection con;
+            con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE);
+            try {
+                Statement stat = con.createStatement();
+                ResultSet res;
+                res = stat.executeQuery(String.format("SELECT id FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
+                if (!res.next()) {
+                    throw new IncorrectPasswordException();
+                }
+                JsonObject json = new JsonObject();
+                for (CurrencyExchange key : exchangeRate.keySet()) {
+                    json.addProperty(key.toString(), exchangeRate.get(key));
+                }
+                String strCurrency = String.join(",", currencyBank.stream().map(x -> x.toString()).toList());
+                if (idBank > 0) {
+                    stat.executeQuery(
+                            String.format(
+                                    "UPDATE `Banks` SET currency='%s', exchangeRate='%s', percent=%f WHERE id=%d",
+                                    strCurrency,
+                                    json.toString(),
+                                    percent,
+                                    idBank
+                            )
+                    );
+                } else {
+                    stat.executeQuery(
+                            String.format(
+                                    "INSERT INTO `Banks` (name, country, currency, exchangeRate, typeBank, adminId, percent) " +
+                                            "VALUES ('%s', '%s', '%s', '%s', %d, %d, %f)",
+                                    nameBank,
+                                    countryBank,
+                                    strCurrency,
+                                    json.toString(),
+                                    typeBank,
+                                    admin.id,
+                                    percent
+                            )
+                    );
+                }
+            } catch (IncorrectPasswordException e) {
+                System.err.println("Incorrect Login or Password");
+                return false;
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ConnectionException();
+            } finally {
+                con.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new ConnectionException();
+        }
+        return true;
+    }
 }

@@ -6,12 +6,10 @@ public abstract class MoneyInformation {
     protected AbstractBank bank;
     protected Date dateStart;
     protected Date dateFinish;
-    protected float percent;
 
-    public MoneyInformation(AbstractBank bank, Date dateStart, Date dateFinish, float percent) {
+    public MoneyInformation(AbstractBank bank, Date dateStart, Date dateFinish) {
         this.bank = bank;
         this.dateStart = dateStart;
         this.dateFinish = dateFinish;
-        this.percent = percent;
     }
 }
