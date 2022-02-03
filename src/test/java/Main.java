@@ -11,7 +11,7 @@ public class Main {
 //        System.out.println(bank.getExchangePair(Currency.DOLLAR, Currency.RUBLES));
 //        System.out.println(bank.getExchangePair(Currency.RUBLES, Currency.DOLLAR));
 
-        LoanBank b = new LoanBank("Name", "Rus");
+//        LoanBank b = new LoanBank("Name", "Rus");
 //        b.test();
     }
 }

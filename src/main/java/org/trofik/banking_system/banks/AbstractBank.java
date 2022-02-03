@@ -1,5 +1,7 @@
 package org.trofik.banking_system.banks;
 
+import org.trofik.banking_system.users.Admin;
+
 import java.util.*;
 
 class CurrencyExchange {
@@ -31,11 +33,19 @@ public abstract class AbstractBank {
     public Set<Currency> currencyBank;
     public Map<CurrencyExchange, Float> exchangeRate;
 
-    public AbstractBank(String nameBank, String countryBank) {
+    protected AbstractBank(String nameBank, String countryBank) {
         this.nameBank = nameBank;
         this.countryBank = countryBank;
         currencyBank = new HashSet<>();
         exchangeRate = new HashMap<>();
+    }
+
+    protected AbstractBank(Admin admin) {
+        //...проверка пароля...
+        // throw IncorrectPassword
+        nameBank = "";
+        countryBank = "";
+        // ...
     }
 
     public void addCurrency(Currency curr) {
@@ -73,4 +83,6 @@ public abstract class AbstractBank {
         }
         return false;
     }
+
+    public abstract boolean save(Admin admin);
 }
