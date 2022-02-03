@@ -14,22 +14,107 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LoanBank extends AbstractBank {
-    public LoanBank(String nameBank, String countryBank, float loanInterestRate) {
-        super(nameBank, countryBank, loanInterestRate);
+    public LoanBank(String nameBank, String countryBank, float loanInterestRate, long time) {
+        super(nameBank, countryBank, loanInterestRate, time);
     }
 
     public LoanBank(Admin admin) {
         super(admin);
     }
 
-    public boolean takeLoan(User user, Money sumLoan) {
-        //...
-        return false;
+    public LoanInformation takeLoan(Client client, Money sumLoan) {
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE)) {
+            Statement stat = con.createStatement();
+            ResultSet res;
+
+            res = stat.executeQuery(String.format(
+                    "SELECT * FROM `Loans` WHERE clientId=%d AND bankId=%d",
+                    client.id,
+                    this.idBank
+            ));
+
+            if (res.next()) {
+                return null;
+            }
+
+            Date dateStart = new Date(System.currentTimeMillis()), dateFinish = new Date(System.currentTimeMillis() + this.time);
+            float moneyStay = sumLoan.getMoney() * (1 + this.percent);
+
+            stat.executeUpdate(String.format(
+                    "INSERT INTO `Loans` (bankId, clientId, sumLoan, sumStay, dateStart, dateFinish, currency) " +
+                            "VALUES (%d, %d, %f, %f, '%s', '%s', '%s')",
+                    this.idBank,
+                    client.id,
+                    sumLoan.getMoney(),
+                    moneyStay,
+                    dateStart,
+                    dateFinish,
+                    sumLoan.getCurrency().toString()
+            ));
+
+            return new LoanInformation(
+                    this,
+                    dateStart,
+                    dateFinish,
+                    sumLoan,
+                    new Money(moneyStay, sumLoan.getCurrency())
+            );
+
+        } catch (SQLException e) {
+            System.err.println("Bad connection");
+            throw new ConnectionException();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ConnectionException();
+        }
     }
 
-    public boolean makePayment(User user, Money sumPayment) {
-        //...
-        return false;
+    public boolean makePayment(Client client, Money sumPayment) {
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE)) {
+            Statement stat = con.createStatement();
+            ResultSet res;
+
+            res = stat.executeQuery(String.format(
+                    "SELECT * FROM `Loans` WHERE clientId=%d AND bankId=%d",
+                    client.id,
+                    this.idBank
+            ));
+
+            if (!res.next()) {
+                return false;
+            }
+
+            float sumToPay = sumPayment.getMoney();
+
+            if (sumPayment.getCurrency() != Currency.valueOf(res.getString("currency"))) {
+                sumToPay = exchangeRate.get(new CurrencyExchange(sumPayment.getCurrency(),
+                        Currency.valueOf(res.getString("currency"))));
+            }
+            float sumStay = res.getFloat("sumStay") - sumToPay;
+            if (sumStay <= 0) {
+                stat.executeUpdate(String.format(
+                        "DELETE FROM `Loans` WHERE bankId=%d AND clientId=%d",
+                        this.idBank,
+                        client.id
+                ));
+            } else {
+                stat.executeUpdate(String.format(
+                        "UPDATE `Loans` SET sumStay=%f WHERE bankId=%d AND clientId=%d",
+                        sumStay,
+                        this.idBank,
+                        client.id
+                ));
+            }
+
+            return true;
+
+        } catch (SQLException e) {
+            System.err.println("Bad connection");
+            throw new ConnectionException();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ConnectionException();
+        }
     }
 
     public static List<LoanInformation> getInfoAboutClient(Client client) {
@@ -44,7 +129,7 @@ public class LoanBank extends AbstractBank {
                 try {
                     Statement stat = con.createStatement();
                     resBank = stat.executeQuery(String.format(
-                            "SELECT * FROM `Banks` WHERE id=%d",
+                            "SELECT * FROM `Admins` WHERE id=(SELECT adminId FROM `Banks` WHERE id=%d LIMIT 1)",
                             res.getInt("id")
                     ));
                 } catch (Exception e) {
@@ -54,9 +139,10 @@ public class LoanBank extends AbstractBank {
                 }
                 infoList.add(new LoanInformation(
                         new LoanBank(
-                                resBank.getString("name"),
-                                resBank.getString("country"),
-                                resBank.getFloat("percent")
+                                new Admin(
+                                        resBank.getString("login"),
+                                        resBank.getString("password")
+                                )
                         ),
                         res.getDate("dateStart"),
                         res.getDate("dateFinish"),
@@ -74,6 +160,7 @@ public class LoanBank extends AbstractBank {
         }
     }
 
+    @Override
     public boolean save(Admin admin) {
         return save(admin, 1);
     }

@@ -44,15 +44,28 @@ public abstract class AbstractBank {
     public Map<CurrencyExchange, Float> exchangeRate;
     public float percent;
     public int idBank;
+    public long time;
 
-    protected AbstractBank(String nameBank, String countryBank, float percent) {
+    protected AbstractBank(String nameBank, String countryBank, float percent, long time) {
         this.nameBank = nameBank;
         this.countryBank = countryBank;
         this.percent = percent;
+        this.time = time;
         currencyBank = new HashSet<>();
         exchangeRate = new HashMap<>();
         idBank = -1;
     }
+
+    /*protected AbstractBank(String nameBank, String countryBank, float percent, long time,
+                           Set<Currency> currencyBank, Map<CurrencyExchange, Float> exchangeRate) {
+        this.nameBank = nameBank;
+        this.countryBank = countryBank;
+        this.percent = percent;
+        this.time = time;
+        this.currencyBank = currencyBank;
+        this.exchangeRate = exchangeRate;
+        idBank = -1;
+    }*/
 
     protected AbstractBank(Admin admin) {
         try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE)) {
@@ -68,10 +81,15 @@ public abstract class AbstractBank {
                 countryBank = res.getString("country");
                 percent = res.getFloat("percent");
                 idBank = res.getInt("id");
+                time = res.getLong("time");
 
-                currencyBank = Arrays.stream(
-                        res.getString("currency").split(",")
-                ).map(Currency::valueOf).collect(Collectors.toSet());
+                if (res.getString("currency").equals("")) {
+                    currencyBank = new HashSet<>();
+                } else {
+                    currencyBank = Arrays.stream(
+                            res.getString("currency").split(",")
+                    ).map(Currency::valueOf).collect(Collectors.toSet());
+                }
 
                 JsonParser parser = new JsonParser();
                 JsonObject json = (JsonObject) parser.parse(res.getString("exchangeRate"));
@@ -175,7 +193,7 @@ public abstract class AbstractBank {
             try {
                 Statement stat = con.createStatement();
                 ResultSet res;
-                res = stat.executeQuery(String.format("SELECT id FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
+                res = stat.executeQuery(String.format("SELECT id, bankId FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
                 if (!res.next()) {
                     throw new IncorrectPasswordException();
                 }
@@ -185,29 +203,45 @@ public abstract class AbstractBank {
                 }
                 String strCurrency = String.join(",", currencyBank.stream().map(x -> x.toString()).toList());
                 if (idBank > 0) {
-                    stat.executeQuery(
+                    if (res.getInt("bankId") != idBank) {
+                        return false;
+                    }
+                    stat.executeUpdate(
                             String.format(
-                                    "UPDATE `Banks` SET currency='%s', exchangeRate='%s', percent=%f WHERE id=%d",
+                                    "UPDATE `Banks` SET currency='%s', exchangeRate='%s', percent=%f WHERE id=%d AND time=%d",
                                     strCurrency,
                                     json.toString(),
                                     percent,
-                                    idBank
+                                    idBank,
+                                    time
                             )
                     );
                 } else {
-                    stat.executeQuery(
+                    stat.executeUpdate(
                             String.format(
-                                    "INSERT INTO `Banks` (name, country, currency, exchangeRate, typeBank, adminId, percent) " +
-                                            "VALUES ('%s', '%s', '%s', '%s', %d, %d, %f)",
+                                    "INSERT INTO `Banks` (name, country, currency, exchangeRate, typeBank, adminId, percent, time) " +
+                                            "VALUES ('%s', '%s', '%s', '%s', %d, %d, %f, %d)",
                                     nameBank,
                                     countryBank,
                                     strCurrency,
                                     json.toString(),
                                     typeBank,
                                     admin.id,
-                                    percent
+                                    percent,
+                                    time
                             )
                     );
+                    res = stat.executeQuery(String.format(
+                            "SELECT id FROM `Banks` WHERE name='%s'",
+                            nameBank
+                    ));
+                    res.next();
+                    idBank = res.getInt("id");
+                    stat.executeUpdate(String.format(
+                            "UPDATE `Admins` SET bankId=%d WHERE id=%d",
+                            idBank,
+                            admin.id
+                    ));
                 }
             } catch (IncorrectPasswordException e) {
                 System.err.println("Incorrect Login or Password");
@@ -224,4 +258,6 @@ public abstract class AbstractBank {
         }
         return true;
     }
+
+    public abstract boolean save(Admin admin);
 }
