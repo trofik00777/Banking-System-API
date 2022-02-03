@@ -55,51 +55,46 @@ public abstract class AbstractBank {
     }
 
     protected AbstractBank(Admin admin) {
-        try {
-            Connection con;
-            con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE);
-            try {
-                Statement stat = con.createStatement();
-                ResultSet res;
-                res = stat.executeQuery(String.format("SELECT id FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
-                if (!res.next()) {
-                    throw new IncorrectPasswordException();
-                }
-                res = stat.executeQuery(String.format("SELECT * FROM `Banks` WHERE adminId=%d", admin.id));
-                if (res.next()) {
-                    nameBank = res.getString("name");
-                    countryBank = res.getString("country");
-                    percent = res.getFloat("percent");
-                    idBank = res.getInt("id");
-
-                    currencyBank = Arrays.stream(
-                            res.getString("currency").split(",")
-                    ).map(Currency::valueOf).collect(Collectors.toSet());
-
-                    JsonParser parser = new JsonParser();
-                    JsonObject json = (JsonObject) parser.parse(res.getString("exchangeRate"));
-                    exchangeRate = new HashMap<>();
-                    for (String key : json.keySet()) {
-                        String[] fromTo = key.split(",");
-                        exchangeRate.put(new CurrencyExchange(Currency.valueOf(fromTo[0]), Currency.valueOf(fromTo[1])), json.get(key).getAsFloat());
-                    }
-                } else {
-                    System.err.println("Bank not found for adminId=" + admin.id);
-                    throw new ConnectionException();
-                }
-            } catch (IncorrectPasswordException e) {
-                System.err.println("Incorrect Login or Password");
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE)) {
+            Statement stat = con.createStatement();
+            ResultSet res;
+            res = stat.executeQuery(String.format("SELECT id FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
+            if (!res.next()) {
                 throw new IncorrectPasswordException();
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new ConnectionException();
-            } finally {
-                con.close();
             }
+            res = stat.executeQuery(String.format("SELECT * FROM `Banks` WHERE adminId=%d", admin.id));
+            if (res.next()) {
+                nameBank = res.getString("name");
+                countryBank = res.getString("country");
+                percent = res.getFloat("percent");
+                idBank = res.getInt("id");
+
+                currencyBank = Arrays.stream(
+                        res.getString("currency").split(",")
+                ).map(Currency::valueOf).collect(Collectors.toSet());
+
+                JsonParser parser = new JsonParser();
+                JsonObject json = (JsonObject) parser.parse(res.getString("exchangeRate"));
+                exchangeRate = new HashMap<>();
+                for (String key : json.keySet()) {
+                    String[] fromTo = key.split(",");
+                    exchangeRate.put(new CurrencyExchange(Currency.valueOf(fromTo[0]), Currency.valueOf(fromTo[1])), json.get(key).getAsFloat());
+                }
+            } else {
+                System.err.println("Bank not found for adminId=" + admin.id);
+                throw new ConnectionException();
+            }
+        } catch (IncorrectPasswordException e) {
+            System.err.println("Incorrect Login or Password");
+            throw new IncorrectPasswordException();
         } catch (SQLException e) {
             e.printStackTrace();
             throw new ConnectionException();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ConnectionException();
         }
+
         //...проверка пароля...
         // throw IncorrectPassword
         // ...
