@@ -2,6 +2,7 @@ package org.trofik.banking_system.banks;
 
 import org.trofik.banking_system.users.Admin;
 
+import java.sql.*;
 import java.util.*;
 
 class CurrencyExchange {
@@ -41,10 +42,34 @@ public abstract class AbstractBank {
     }
 
     protected AbstractBank(Admin admin) {
+        try {
+            Connection con;
+            con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE);
+            try {
+                Statement stat = con.createStatement();
+//                ResultSet res = stat.executeQuery(String.format("SELECT id FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
+//                res.next();
+//                int idAdmin = res.getInt("id");
+                ResultSet res = stat.executeQuery(String.format("SELECT * FROM `Banks` WHERE adminId=%d", admin.id));
+                if (res.next()) {
+                    nameBank = res.getString("name");
+                    countryBank = res.getString("country");
+                } else {
+                    System.err.println("Bank not found for adminId=" + admin.id);
+                    throw new ConnectionException();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ConnectionException();
+            } finally {
+                con.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new ConnectionException();
+        }
         //...проверка пароля...
         // throw IncorrectPassword
-        nameBank = "";
-        countryBank = "";
         // ...
     }
 
