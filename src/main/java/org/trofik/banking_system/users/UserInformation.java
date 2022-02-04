@@ -12,4 +12,17 @@ public abstract class UserInformation {
         this.user = user;
         this.infoList = infoList;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder information = new StringBuilder();
+        information.append("################ Information about User ################\n");
+        for (int i = 0; i < infoList.size(); i++) {
+            information.append(infoList.get(i).toString());
+            information.append("\n");
+        }
+        information.append("########################################################\n");
+
+        return information.toString();
+    }
 }

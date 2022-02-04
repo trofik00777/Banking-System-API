@@ -157,10 +157,7 @@ public abstract class AbstractBank {
         return false;
     }
 
-    protected static ResultSet getInfoClient(Client client, String tableToSearchName) {
-        try {
-            Connection con;
-            con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE);
+    protected static ResultSet getInfoClient(Client client, String tableToSearchName, Connection con) {
             try {
                 Statement stat = con.createStatement();
                 ResultSet res;
@@ -175,19 +172,16 @@ public abstract class AbstractBank {
                         client.id
                 ));
                 return res;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new ConnectionException();
             } catch (IncorrectPasswordException e) {
                 System.err.println("Incorrect Login or Password");
                 throw new IncorrectPasswordException();
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new ConnectionException();
-            } finally {
-                con.close();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new ConnectionException();
-        }
     }
 
     protected boolean save(Admin admin, int typeBank) {

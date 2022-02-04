@@ -7,6 +7,7 @@ import org.trofik.banking_system.users.Client;
 import org.trofik.banking_system.users.User;
 
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,7 +38,8 @@ public class LoanBank extends AbstractBank {
                 return null;
             }
 
-            Date dateStart = new Date(System.currentTimeMillis()), dateFinish = new Date(System.currentTimeMillis() + this.time);
+            long dateStart = System.currentTimeMillis(),
+                    dateFinish = System.currentTimeMillis() + this.time;
             float moneyStay = sumLoan.getMoney() * (1 + this.percent);
 
             stat.executeUpdate(String.format(
@@ -121,10 +123,8 @@ public class LoanBank extends AbstractBank {
     }
 
     public static List<LoanInformation> getInfoAboutClient(Client client) {
-        try {
-            ResultSet res = AbstractBank.getInfoClient(client, "Loans");
-            Connection con;
-            con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE);
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE)) {
+            ResultSet res = AbstractBank.getInfoClient(client, "Loans", con);
 
             List<LoanInformation> infoList = new ArrayList<>();
             ResultSet resBank;
@@ -133,9 +133,10 @@ public class LoanBank extends AbstractBank {
                     Statement stat = con.createStatement();
                     resBank = stat.executeQuery(String.format(
                             "SELECT * FROM `Admins` WHERE id=(SELECT adminId FROM `Banks` WHERE id=%d LIMIT 1)",
-                            res.getInt("id")
+                            res.getInt("bankId")
                     ));
                 } catch (Exception e) {
+                    e.printStackTrace();
                     con.close();
                     throw new ConnectionException();
 
@@ -144,17 +145,19 @@ public class LoanBank extends AbstractBank {
                         new LoanBank(
                                 new Admin(
                                         resBank.getString("login"),
-                                        resBank.getString("password")
+                                        resBank.getString("password"),
+                                        true
                                 )
                         ),
-                        res.getDate("dateStart"),
-                        res.getDate("dateFinish"),
+                        res.getLong("dateStart"),
+                        res.getLong("dateFinish"),
                         new Money(res.getFloat("sumLoan"), Currency.valueOf(res.getString("currency"))),
                         new Money(res.getFloat("sumStay"), Currency.valueOf(res.getString("currency")))
                 ));
             }
             return infoList;
         } catch (SQLException e) {
+            e.printStackTrace();
             System.err.println("Bad connection!");
             throw new ConnectionException();
         } catch (Exception e) {

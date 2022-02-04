@@ -57,10 +57,16 @@ public abstract class User {
     }
 
     public User(String login, String password, boolean isAdmin) {
+        this(login, password, isAdmin, false);
+    }
+
+    public User(String login, String password, boolean isAdmin, boolean isHashed) {
         try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfoUsers.NAME_DATABASE)) {
             Statement stat = con.createStatement();
             ResultSet res;
-            password = HashSHA256.sha256(password);
+            if (!isHashed) {
+                password = HashSHA256.sha256(password);
+            }
             res = stat.executeQuery(String.format("SELECT * FROM `%s` WHERE login='%s' AND password='%s'",
                     isAdmin ? "Admins" : "Clients", login, password));
             if (!res.next()) {

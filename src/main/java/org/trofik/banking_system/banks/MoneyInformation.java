@@ -4,12 +4,21 @@ import java.sql.Date;
 
 public abstract class MoneyInformation {
     protected AbstractBank bank;
-    protected Date dateStart;
-    protected Date dateFinish;
+    protected long dateStart;
+    protected long dateFinish;
 
-    public MoneyInformation(AbstractBank bank, Date dateStart, Date dateFinish) {
+    public MoneyInformation(AbstractBank bank, long dateStart, long dateFinish) {
         this.bank = bank;
         this.dateStart = dateStart;
         this.dateFinish = dateFinish;
+    }
+
+    @Override
+    public String toString() {
+        return "MoneyInformation{" +
+                "bank=" + bank +
+                ", dateStart=" + dateStart +
+                ", dateFinish=" + dateFinish +
+                '}';
     }
 }

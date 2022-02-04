@@ -26,14 +26,12 @@ public class Main {
 //        json.addProperty("fuck", 67.5f);
 //        System.out.println(json);
 
-//        Admin admin = new Admin("Ivan", "Petrov", "ivanp", "HardPassword");
         Admin admin = new Admin("ivanp", "HardPassword");
-//        Admin admin1 = new Admin("olegtink", "qwerty12345");
-//        System.out.println(admin1.getName() + " " + admin1.getSurname() + " " + admin1.id);
         LoanBank bank = new LoanBank(admin);
         Client client = new Client("petr123", "my_password");
-        System.out.println(client.login + client.id + client.name + client.surname + client.password + client.getInfo());
-        System.out.println(bank.makePayment(client, new Money(100f, Currency.EUROS)));
+//        bank.takeLoan(client, new Money(167_538f, Currency.RUBLES));
+        System.out.println(admin.getInfo());
+
 //        bank.addExchangePair(Currency.RUBLES, Currency.DOLLAR, 0.02f);
 //        bank.save(admin);
 //        System.out.println(bank.currencyBank);
