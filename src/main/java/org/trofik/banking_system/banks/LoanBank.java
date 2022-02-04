@@ -33,7 +33,7 @@ public class LoanBank extends AbstractBank {
                     this.idBank
             ));
 
-            if (res.next()) {
+            if (res.next() || !currencyBank.contains(sumLoan.getCurrency())) {
                 return null;
             }
 
@@ -87,8 +87,11 @@ public class LoanBank extends AbstractBank {
             float sumToPay = sumPayment.getMoney();
 
             if (sumPayment.getCurrency() != Currency.valueOf(res.getString("currency"))) {
+                if (!currencyBank.contains(sumPayment.getCurrency())) {
+                    return false;
+                }
                 sumToPay = exchangeRate.get(new CurrencyExchange(sumPayment.getCurrency(),
-                        Currency.valueOf(res.getString("currency"))));
+                        Currency.valueOf(res.getString("currency")))) * sumPayment.getMoney();
             }
             float sumStay = res.getFloat("sumStay") - sumToPay;
             if (sumStay <= 0) {

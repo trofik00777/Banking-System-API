@@ -71,7 +71,8 @@ public abstract class AbstractBank {
         try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE)) {
             Statement stat = con.createStatement();
             ResultSet res;
-            res = stat.executeQuery(String.format("SELECT id FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
+            res = stat.executeQuery(String.format("SELECT id FROM `Admins` WHERE login='%s' AND password='%s'",
+                    admin.login, admin.password));
             if (!res.next()) {
                 throw new IncorrectPasswordException();
             }
@@ -96,7 +97,8 @@ public abstract class AbstractBank {
                 exchangeRate = new HashMap<>();
                 for (String key : json.keySet()) {
                     String[] fromTo = key.split(",");
-                    exchangeRate.put(new CurrencyExchange(Currency.valueOf(fromTo[0]), Currency.valueOf(fromTo[1])), json.get(key).getAsFloat());
+                    exchangeRate.put(new CurrencyExchange(Currency.valueOf(fromTo[0]), Currency.valueOf(fromTo[1])),
+                            json.get(key).getAsFloat());
                 }
             } else {
                 System.err.println("Bank not found for adminId=" + admin.id);
@@ -128,7 +130,8 @@ public abstract class AbstractBank {
 
     public void addExchangePair(Currency from, Currency to, float cost) {
         if (!currencyBank.contains(from) || !currencyBank.contains(to)) {
-            System.err.println("Данную(-ые) валюту(-ы) " + from.toString() + "/" + to.toString() + " не принимает банк " + nameBank);
+            System.err.println("Данную(-ые) валюту(-ы) " + from.toString() + "/" + to.toString() +
+                    " не принимает банк " + nameBank);
             return;
         }
         CurrencyExchange exchange = new CurrencyExchange(from, to);
@@ -161,7 +164,8 @@ public abstract class AbstractBank {
             try {
                 Statement stat = con.createStatement();
                 ResultSet res;
-                res = stat.executeQuery(String.format("SELECT id FROM `Clients` WHERE login='%s' AND password='%s'", client.login, client.password));
+                res = stat.executeQuery(String.format("SELECT id FROM `Clients` WHERE login='%s' AND password='%s'",
+                        client.login, client.password));
                 if (!res.next()) {
                     throw new IncorrectPasswordException();
                 }
@@ -193,7 +197,8 @@ public abstract class AbstractBank {
             try {
                 Statement stat = con.createStatement();
                 ResultSet res;
-                res = stat.executeQuery(String.format("SELECT id, bankId FROM `Admins` WHERE login='%s' AND password='%s'", admin.login, admin.password));
+                res = stat.executeQuery(String.format("SELECT id, bankId FROM `Admins` WHERE login='%s' AND password='%s'",
+                        admin.login, admin.password));
                 if (!res.next()) {
                     throw new IncorrectPasswordException();
                 }
@@ -260,4 +265,17 @@ public abstract class AbstractBank {
     }
 
     public abstract boolean save(Admin admin);
+
+    @Override
+    public String toString() {
+        return "AbstractBank{" +
+                "nameBank='" + nameBank + '\'' +
+                ", countryBank='" + countryBank + '\'' +
+                ", currencyBank=" + currencyBank +
+                ", exchangeRate=" + exchangeRate +
+                ", percent=" + percent +
+                ", idBank=" + idBank +
+                ", time=" + time +
+                '}';
+    }
 }

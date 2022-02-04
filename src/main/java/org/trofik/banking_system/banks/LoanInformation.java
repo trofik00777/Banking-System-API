@@ -11,4 +11,15 @@ public class LoanInformation extends MoneyInformation {
         this.moneyLoan = moneyLoan;
         this.moneyStay = moneyStay;
     }
+
+    @Override
+    public String toString() {
+        return "LoanInformation{" +
+                "moneyLoan=" + moneyLoan +
+                ", moneyStay=" + moneyStay +
+                ", bank=" + bank +
+                ", dateStart=" + dateStart +
+                ", dateFinish=" + dateFinish +
+                '}';
+    }
 }

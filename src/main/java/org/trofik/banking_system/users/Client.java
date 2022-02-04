@@ -5,6 +5,10 @@ public class Client extends User {
         super(name, surname, login, password, false);
     }
 
+    public Client(String login, String password) {
+        super(login, password, false);
+    }
+
     @Override
     public ClientInformation getInfo() {
         //...

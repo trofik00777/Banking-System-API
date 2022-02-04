@@ -1,6 +1,8 @@
 import com.google.gson.JsonObject;
 import org.trofik.banking_system.banks.*;
 import org.trofik.banking_system.users.Admin;
+import org.trofik.banking_system.users.Client;
+import org.trofik.banking_system.users.User;
 
 import java.sql.*;
 
@@ -26,11 +28,24 @@ public class Main {
 
 //        Admin admin = new Admin("Ivan", "Petrov", "ivanp", "HardPassword");
         Admin admin = new Admin("ivanp", "HardPassword");
-        System.out.println(admin.getName() + " " + admin.getSurname() + " " + admin.id);
-        AbstractBank bank = new LoanBank(admin);
-        bank.addExchangePair(Currency.RUBLES, Currency.DOLLAR, 0.02f);
-        bank.save(admin);
-        System.out.println(bank.currencyBank);
-        System.out.println(bank.exchangeRate);
+//        Admin admin1 = new Admin("olegtink", "qwerty12345");
+//        System.out.println(admin1.getName() + " " + admin1.getSurname() + " " + admin1.id);
+        LoanBank bank = new LoanBank(admin);
+        Client client = new Client("petr123", "my_password");
+        System.out.println(client.login + client.id + client.name + client.surname + client.password + client.getInfo());
+        System.out.println(bank.makePayment(client, new Money(100f, Currency.EUROS)));
+//        bank.addExchangePair(Currency.RUBLES, Currency.DOLLAR, 0.02f);
+//        bank.save(admin);
+//        System.out.println(bank.currencyBank);
+//        System.out.println(bank.exchangeRate);
+
+
+        //olegtink-qwerty12345
+        //ivanp-HardPassword
+        //petr123-my_password
+        //oliv24-olivia
+        //taw98-yoyo
+
+
     }
 }
