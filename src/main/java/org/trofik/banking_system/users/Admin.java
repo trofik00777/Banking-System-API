@@ -1,8 +1,8 @@
 package org.trofik.banking_system.users;
 
-import org.trofik.banking_system.banks.AbstractBank;
 import org.trofik.banking_system.banks.BankInformation;
 import org.trofik.banking_system.banks.LoanBank;
+import org.trofik.banking_system.banks.SavingBank;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,18 +25,22 @@ public class Admin extends User {
         List<BankInformation> bankInformationList = new ArrayList<>();
         try {
             bankInformationList.add(new BankInformation(new LoanBank(this)));
-        } catch (Exception e) {
-
-        }
-
+        } catch (Exception e) {}
         try {
-//            bankInformationList.add(new BankInformation(new SavingBank(this)));
-        } catch (Exception e) {
-
-        }
+            bankInformationList.add(new BankInformation(new SavingBank(this)));
+        } catch (Exception e) {}
 
         return new AdminInformation(this, bankInformationList);
     }
 
-
+    @Override
+    public String toString() {
+        return "Admin{" +
+                "name='" + name + '\'' +
+                ", surname='" + surname + '\'' +
+                ", login='" + login + '\'' +
+                ", password='" + password + '\'' +
+                ", id=" + id +
+                '}';
+    }
 }

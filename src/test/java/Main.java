@@ -1,8 +1,6 @@
 import com.google.gson.JsonObject;
 import org.trofik.banking_system.banks.*;
-import org.trofik.banking_system.users.Admin;
-import org.trofik.banking_system.users.Client;
-import org.trofik.banking_system.users.User;
+import org.trofik.banking_system.users.*;
 
 import java.sql.*;
 
@@ -27,10 +25,15 @@ public class Main {
 //        System.out.println(json);
 
         Admin admin = new Admin("ivanp", "HardPassword");
+        Admin admin1 = new Admin("olegtink", "qwerty12345");
         LoanBank bank = new LoanBank(admin);
+        SavingBank bank1 = new SavingBank(admin1);
+        bank1.addCurrency(Currency.RUBLES);
+        bank1.save(admin1);
         Client client = new Client("petr123", "my_password");
 //        bank.takeLoan(client, new Money(167_538f, Currency.RUBLES));
-        System.out.println(admin.getInfo());
+        bank1.giveMoneyForSaving(client, new Money(152_000f, Currency.RUBLES));
+        System.out.println(client.getInfo());
 
 //        bank.addExchangePair(Currency.RUBLES, Currency.DOLLAR, 0.02f);
 //        bank.save(admin);

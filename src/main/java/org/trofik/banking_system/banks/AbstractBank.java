@@ -76,7 +76,10 @@ public abstract class AbstractBank {
             if (!res.next()) {
                 throw new IncorrectPasswordException();
             }
-            res = stat.executeQuery(String.format("SELECT * FROM `Banks` WHERE adminId=%d", admin.id));
+            res = stat.executeQuery(String.format("SELECT * FROM `Banks` WHERE adminId=%d AND typeBank=%d",
+                    admin.id,
+                    this instanceof LoanBank ? TypesBanks.TYPES_BANKS.get("Loan") : TypesBanks.TYPES_BANKS.get("Saving")
+            ));
             if (res.next()) {
                 nameBank = res.getString("name");
                 countryBank = res.getString("country");
@@ -155,6 +158,105 @@ public abstract class AbstractBank {
             return true;
         }
         return false;
+    }
+
+    protected LoanSaveInformation openOperationInBank(Client client, Money sum, boolean isLoan) {
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE)) {
+            Statement stat = con.createStatement();
+            ResultSet res;
+
+            res = stat.executeQuery(String.format(
+                    "SELECT * FROM `%s` WHERE clientId=%d AND bankId=%d",
+                    isLoan ? "Loans" : "Saves",
+                    client.id,
+                    this.idBank
+            ));
+
+            if (res.next() || !currencyBank.contains(sum.getCurrency())) {
+                return null;
+            }
+
+            long dateStart = System.currentTimeMillis(),
+                    dateFinish = System.currentTimeMillis() + this.time;
+            float moneyClose = sum.getMoney() * (1 + this.percent);
+
+            stat.executeUpdate(String.format(
+                    "INSERT INTO `%s` (bankId, clientId, %s, %s, dateStart, dateFinish, currency) " +
+                            "VALUES (%d, %d, %f, %f, '%s', '%s', '%s')",
+                    isLoan ? "Loans" : "Saves",
+                    isLoan ? "sumLoan" : "sumOpen",
+                    isLoan ? "sumStay" : "sumClose",
+                    this.idBank,
+                    client.id,
+                    sum.getMoney(),
+                    moneyClose,
+                    dateStart,
+                    dateFinish,
+                    sum.getCurrency().toString()
+            ));
+
+            if (isLoan) {
+                return new LoanSaveInformation(
+                        this,
+                        dateStart,
+                        dateFinish,
+                        sum,
+                        new Money(moneyClose, sum.getCurrency())
+                );
+            } else {
+                return null;
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Bad connection");
+            throw new ConnectionException();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ConnectionException();
+        }
+    }
+
+    protected static List<LoanSaveInformation> getInfoLoanSave(Client client, boolean isLoan) {
+        try (Connection con = DriverManager.getConnection("jdbc:sqlite:" + DataBaseInfo.NAME_DATABASE)) {
+            ResultSet res = AbstractBank.getInfoClient(client, isLoan ? "Loans" : "Saves", con);
+
+            List<LoanSaveInformation> infoList = new ArrayList<>();
+            ResultSet resBank;
+            while (res.next()) {
+                try {
+                    Statement stat = con.createStatement();
+                    resBank = stat.executeQuery(String.format(
+                            "SELECT * FROM `Admins` WHERE id=(SELECT adminId FROM `Banks` WHERE id=%d LIMIT 1)",
+                            res.getInt("bankId")
+                    ));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throw new ConnectionException();
+
+                }
+                Admin admin = new Admin(
+                        resBank.getString("login"),
+                        resBank.getString("password"),
+                        true
+                );
+                infoList.add(new LoanSaveInformation(
+                        isLoan ? new LoanBank(admin) : new SavingBank(admin),
+                        res.getLong("dateStart"),
+                        res.getLong("dateFinish"),
+                        new Money(res.getFloat(isLoan ? "sumLoan" : "sumOpen"), Currency.valueOf(res.getString("currency"))),
+                        new Money(res.getFloat(isLoan ? "sumStay" : "sumClose"), Currency.valueOf(res.getString("currency")))
+                ));
+            }
+            return infoList;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("Bad connection!");
+            throw new ConnectionException();
+        } catch (Exception e) {
+            System.err.println("Oops...");
+            throw e;
+        }
     }
 
     protected static ResultSet getInfoClient(Client client, String tableToSearchName, Connection con) {

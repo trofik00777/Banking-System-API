@@ -1,6 +1,10 @@
 package org.trofik.banking_system.users;
 
 import org.trofik.banking_system.banks.LoanBank;
+import org.trofik.banking_system.banks.LoanSaveInformation;
+import org.trofik.banking_system.banks.SavingBank;
+
+import java.util.List;
 
 public class Client extends User {
     public Client(String name, String surname, String login, String password) {
@@ -17,6 +21,19 @@ public class Client extends User {
 
     @Override
     public ClientInformation getInfo() {
-        return new ClientInformation(this, LoanBank.getInfoAboutClient(this));
+        List<LoanSaveInformation> loansSaves = LoanBank.getInfoAboutClient(this);
+        loansSaves.addAll(SavingBank.getInfoAboutClient(this));
+        return new ClientInformation(this, loansSaves);
+    }
+
+    @Override
+    public String toString() {
+        return "Client{" +
+                "name='" + name + '\'' +
+                ", surname='" + surname + '\'' +
+                ", login='" + login + '\'' +
+                ", password='" + password + '\'' +
+                ", id=" + id +
+                '}';
     }
 }

@@ -1,7 +1,5 @@
 package org.trofik.banking_system.users;
 
-import org.trofik.banking_system.banks.MoneyInformation;
-
 import java.util.List;
 
 public abstract class UserInformation {

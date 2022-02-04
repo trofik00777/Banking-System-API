@@ -1,14 +1,9 @@
 package org.trofik.banking_system.users;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.trofik.banking_system.HashSHA256;
 import org.trofik.banking_system.banks.*;
 
 import java.sql.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.stream.Collectors;
 
 public abstract class User {
     public final String name;

@@ -16,4 +16,12 @@ public class Money {
     public Currency getCurrency() {
         return currency;
     }
+
+    @Override
+    public String toString() {
+        return "Money{" +
+                "money=" + money +
+                ", currency=" + currency +
+                '}';
+    }
 }

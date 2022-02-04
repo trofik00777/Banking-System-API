@@ -1,6 +1,5 @@
 package org.trofik.banking_system.banks;
 
-import java.sql.Date;
 
 public abstract class MoneyInformation {
     protected AbstractBank bank;

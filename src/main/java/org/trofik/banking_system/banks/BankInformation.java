@@ -10,7 +10,8 @@ public class BankInformation {
     }
 
     public List<MoneyInformation> getInfoAboutClients() {
-        return List.of(new LoanInformation(bank, 1, 1, null, null));
+        // coming soon...
+        return List.of(new LoanSaveInformation(bank, 1, 1, null, null));
     }
 
     @Override
