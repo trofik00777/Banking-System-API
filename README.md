@@ -13,7 +13,7 @@ For **Saving**:
 1. Open a deposit
 2. Withdraw money from the account
 
-By default, the system runs on the SQLite database located in the `db/` folder. Optionally, you can write in the DatabaseInfo files.java and DataBase Info Users.java path to its database
+By default, the system runs on the SQLite database located in the `db/` folder. Optionally, you can write in the DataBaseInfo.java and DataBaseInfoUsers.java path to its database
 
 
 
