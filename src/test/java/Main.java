@@ -31,8 +31,9 @@ public class Main {
         bank1.addCurrency(Currency.RUBLES);
         bank1.save(admin1);
         Client client = new Client("petr123", "my_password");
+        client.makePayment("PetrovBank", new Money(7_000f, Currency.RUBLES));
 //        bank.takeLoan(client, new Money(167_538f, Currency.RUBLES));
-        bank1.giveMoneyForSaving(client, new Money(152_000f, Currency.RUBLES));
+//        bank1.giveMoneyForSaving(client, new Money(152_000f, Currency.RUBLES));
         System.out.println(client.getInfo());
 
 //        bank.addExchangePair(Currency.RUBLES, Currency.DOLLAR, 0.02f);
