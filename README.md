@@ -21,6 +21,10 @@ By default, the system runs on the SQLite database located in the `db/` folder. 
 
 You can use my build using maven, which is located in the `result_build/` directory, or build the project yourself
 
+## Example of using
+
+Here is an example of a simple client-server command-line application using this API: https://github.com/trofik00777/MultiThread-SocketServer-Banks
+
 ## Package structure
 
 ```
